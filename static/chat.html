@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ColorDispute</title>
+    <style>
+        ::before, *, ::after {
+            box-sizing: border-box;
+        }
+
+        html {
+            font-family: "Roboto", "Open Sans", Helvetica, Arial, sans-serif;
+            height: 100%;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            height: 100%;
+        }
+
+        noscript {
+            color: darkred;
+        }
+
+        main {
+            width: 60rem;
+            height: calc(100% - 1rem);
+            margin: 0.5rem;
+            border: 1px solid gainsboro;
+            border-radius: 3px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-list {
+            display: flex;
+            flex-grow: 1;
+            flex-direction: column;
+            overflow: auto;
+            margin: 0.3rem;
+            border: 1px solid gainsboro;
+            border-radius: 3px;
+        }
+
+        .chat-list section {
+            margin: 0.3rem;
+            padding: 0 1rem;
+            border-radius: 3px;
+            text-align: justify;
+        }
+
+        .add-message-form {
+            margin: 0 0.3rem 0.3rem 0.3rem;
+        }
+
+        label {
+            cursor: pointer;
+        }
+
+        textarea {
+            display: block;
+            width: 100%;
+            min-height: 4rem;
+            resize: vertical;
+            padding: 0.375rem 1.3rem;
+            border: 1px solid gainsboro;
+            border-radius: 3px;
+            font-size: 1rem;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin: 0.3rem 0 0 0;
+        }
+
+        .controls-color-pickers {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+        }
+
+        button, input {
+            border: 1px solid gainsboro;
+            border-radius: 3px;
+        }
+
+        /*Убрать октокота, если не помещается на экране.*/
+        @media (max-width: 66rem) {
+            .github-link {
+                display: none;
+            }
+        }
+
+        .github-icon {
+            fill: darkgray;
+            position: fixed;
+            right: 0.5rem;
+            bottom: 0.5rem;
+            width: 2rem;
+        }
+    </style>
+</head>
+<body>
+<noscript>Увы и ах, в современном web мало что будет работать без Javascript. Придётся включить.</noscript>
+<!--внешний вид:
+лента в середине экрана.
+Окошко для ввода текста.
+Метка с выбором цвета, кнопка отправить.-->
+<main>
+    <article class="chat-list">
+        <div>
+            <section style="background: cornsilk; color: darkolivegreen">
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin sodales arcu ac magna elementum, et
+                finibus mauris posuere. Suspendisse vel mollis dolor. Suspendisse consequat velit faucibus scelerisque
+                bibendum. Cras non hendrerit sem, id viverra nunc. Morbi sit amet ex et dolor laoreet interdum. Fusce
+                imperdiet, sem non convallis pellentesque, est velit faucibus nisl, eu porttitor nibh velit vitae augue.
+                Aenean lacinia risus eget tempor porttitor. Maecenas ac blandit dolor, molestie luctus enim. Maecenas
+                cursus risus metus, eget blandit nulla egestas eu. Nulla blandit lacinia eros, eu aliquet est volutpat
+                fringilla. Aenean luctus auctor feugiat. Nulla gravida eleifend semper. Sed faucibus lorem id lorem
+                tincidunt, eu vehicula diam feugiat. Mauris varius tristique purus non sagittis. Cras efficitur, enim
+                quis laoreet tincidunt, felis nulla pharetra eros, vel porttitor nibh nulla nec augue. Sed ut dignissim
+                massa, eget porta mi.
+            </section>
+            <section style="background: lightgreen; color: darkblue">
+                Suspendisse semper vestibulum erat, a mollis erat tempus in. Vivamus efficitur neque turpis, non cursus
+                enim suscipit eu. Maecenas quam mi, varius in lacus et, vestibulum fringilla velit. Suspendisse
+                consectetur ligula sed erat aliquet, ut suscipit odio molestie. Aenean id felis at justo malesuada
+                fringilla. Donec vitae justo nec augue tincidunt ultrices. Mauris lacinia facilisis malesuada. Sed
+                pulvinar molestie tortor, ut fringilla felis rutrum non. Etiam auctor vitae nulla non ultrices. Sed urna
+                erat, elementum ut odio vel, facilisis pellentesque augue. Nunc nec facilisis tellus. Mauris malesuada
+                velit ut diam feugiat, in placerat eros ultricies. Fusce pulvinar mollis efficitur.
+            </section>
+            <section style="background: lightgoldenrodyellow; color: darkslategrey">
+                Aliquam blandit purus id metus egestas egestas. Pellentesque habitant morbi tristique senectus et netus
+                et malesuada fames ac turpis egestas. Aenean quis lectus quis turpis interdum pharetra non at nunc.
+                Mauris vehicula tempor felis, at blandit orci maximus at. Vivamus vel purus facilisis, tristique justo
+                eget, mattis leo. Morbi quis justo at quam posuere vehicula. Aenean tincidunt sagittis sem, sed gravida
+                nisl posuere vitae. Vestibulum vel volutpat odio. Phasellus vitae maximus risus, eu tempus est. Sed sed
+                elementum nisi. Vivamus felis diam, scelerisque in metus at, hendrerit vestibulum massa.
+            </section>
+            <section style="background: lightsteelblue; color: darkblue">
+                Pellentesque aliquam tortor ac urna luctus sollicitudin. Donec at egestas ex. Etiam nec sem a ante
+                finibus finibus. Donec eget est lacinia, condimentum eros ac, auctor purus. Duis scelerisque dui arcu,
+                quis volutpat felis elementum quis. Nulla id interdum mi. Morbi aliquet justo in magna eleifend mollis.
+                In mattis sed lorem ac euismod. Mauris sed odio efficitur, iaculis augue vitae, efficitur ligula.
+                Maecenas facilisis, lectus vitae bibendum pellentesque, mauris leo vulputate metus, in blandit dolor
+                urna at quam. Donec eget laoreet metus. Proin quam arcu, auctor vitae viverra vitae, molestie viverra
+                ante. Pellentesque ullamcorper, purus vitae iaculis dictum, lacus mauris molestie dolor, a venenatis
+                turpis orci nec nunc.
+            </section>
+            <section style="background: lightskyblue; color: black">
+                Aenean fringilla tristique ex, id pretium est cursus et. Vivamus sed fermentum turpis, a tincidunt ex.
+                Cras dignissim massa ac maximus tristique. Integer eget tincidunt ex, eu dignissim enim. Nulla facilisi.
+                Interdum et malesuada fames ac ante ipsum primis in faucibus. Maecenas non risus maximus, hendrerit
+                tortor ac, suscipit orci. Vivamus aliquet dapibus mollis. Sed tortor elit, ornare sit amet porttitor
+                eget, placerat vel arcu. Etiam efficitur nisi eu ligula condimentum, id pulvinar ex imperdiet. Fusce ac
+                auctor leo. Nunc sollicitudin metus vitae finibus accumsan. Nam cursus elementum dignissim. Aliquam
+                pharetra, nibh eget lacinia mattis, metus enim bibendum nisl, et cursus dolor tellus vitae velit.
+            </section>
+        </div>
+    </article>
+    <aside class="add-message-form">
+        <form>
+            <textarea id="message-text" placeholder="Что думаете?"></textarea>
+            <div class="controls">
+                <div class="controls-color-pickers">
+                    <div>Цвет <label for="background-color">фона</label>&nbsp;</div>
+                    <input id="background-color" type="color" value="#ffffff">
+                    <div>, <label for="text-color">текста</label>&nbsp;</div>
+                    <input id="text-color" type="color" value="#000000">
+                    <div>.</div>
+                </div>
+                <button>Отправить.</button>
+            </div>
+        </form>
+    </aside>
+</main>
+<a class="github-link" href="#"> <!--Октокот-->
+    <svg class="github-icon" viewBox="0 0 16 16" version="1.1" aria-hidden="true">
+        <path fill-rule="evenodd"
+              d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path>
+    </svg>
+</a>
+<!--Шаблон нового сообщения.-->
+<template>
+    <section>
+
+    </section>
+</template>
+<script>
+
+</script>
+</body>
+</html>

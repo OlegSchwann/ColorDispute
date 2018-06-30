@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ColorDispute</title>
+    <style>
+        ::before, *, ::after {
+            box-sizing: border-box;
+        }
+
+        html {
+            font-family: "Roboto", "Open Sans", Helvetica, Arial, sans-serif;
+            height: 100%;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            height: 100%;
+        }
+
+        noscript {
+            color: darkred;
+        }
+
+        main {
+            width: 60rem;
+            height: calc(100% - 1rem);
+            margin: 0.5rem;
+            border: 1px solid gainsboro;
+            border-radius: 3px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .instruction-container {
+            border: 1px solid gainsboro;
+            border-radius: 3px;
+            margin: 0.3rem;
+            display: flex;
+            flex-grow: 1;
+            flex-direction: column;
+        }
+
+        .instruction-container section {
+            margin: 0.3rem;
+            padding: 0 1rem;
+            border-radius: 3px;
+            text-align: justify;
+        }
+
+        .address-assembly-line{
+            margin: 2rem 0 2rem 12rem;
+        }
+
+        #room-input-address{
+            border: 1px solid gainsboro;
+            border-radius: 3px;
+            font-family: monospace;
+            width: 13.3rem;
+        }
+
+        #room-input-address:invalid ~ .result-link{
+            display: none;
+        }
+
+        /*Убрать октокота, если не помещается на экране.*/
+        @media (max-width: 66rem) {
+            .github-link {
+                display: none;
+            }
+        }
+
+        .github-icon {
+            fill: darkgray;
+            position: fixed;
+            right: 0.5rem;
+            bottom: 0.5rem;
+            width: 2rem;
+        }
+    </style>
+</head>
+<body>
+<noscript>Увы и ах, в современном web мало что будет работать без Javascript. Придётся включить.</noscript>
+<main>
+    <article class="instruction-container">
+        <section style="background: lightgreen">
+            Рад видеть вас.
+        </section>
+        <section style="background: cornsilk">
+            Это немного необычный чатик.
+            По любому адресу есть комната.
+            В ней вы можете написать, что хотите.
+            Выделите цветом ваши сообщения, ваш цвет - ваша личность тут.
+            Любой зашедший увидит ваше сообщение.
+            Комната живёт до тех пор, пока в ней находится хотя бы один участник.
+            Только толпа поддерживает жизнь, люди разойдутся - речи растают как дым.
+        </section>
+        <section class="address-assembly-form">
+            <div class="address-assembly-line">
+                https://ColorDispute/
+                <input id="room-input-address" type="text" placeholder="имя комнаты" pattern="^[a-z0-9\-._~]{1,16}$" required>
+                <span class="result-link">
+                    ➜
+                    <a id="room-link" href="">перейти.</a>
+                </span>
+            </div>
+            <script>
+                /* Меняет ссылку на комнату, при изменении текста в форме. */
+                "use strict";
+                document.getElementById("room-input-address").onchange = (event)=>{
+                    document.getElementById("room-link").setAttribute("href", "/" + event.currentTarget.value);
+                }
+            </script>
+        </section>
+        <section style="background: azure">
+            Вдохновлено проектом <a href="http://pen.io/">pen.io</a>.
+            Он настолько минималистичен, что нечему зацепится глазу.
+            Немного интерестно асоциировать это с бесконечной
+            <a href="https://libraryofbabel.info/">Библиотекой Бабеля</a>.
+        </section>
+    </article>
+</main>
+<a class="github-link" href="#"> <!--Октокот-->
+    <svg class="github-icon" viewBox="0 0 16 16" version="1.1" aria-hidden="true">
+        <path fill-rule="evenodd"
+              d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path>
+    </svg>
+</a>
+</body>
+</html>
