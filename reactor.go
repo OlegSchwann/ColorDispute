@@ -4,7 +4,6 @@ import (
 	"github.com/gorilla/websocket"
 	"sync"
 	"log"
-	"fmt"
 )
 
 type Message struct {
@@ -30,12 +29,11 @@ type User struct {
 }
 
 type Users struct {
-	List  []*User
+	Set   map[*User]bool // множество пользователей.
 	Mutex sync.RWMutex
 }
 
 type Room struct {
-	roomName string
 	Users    Users
 	Messages Messages
 	// Для каждой комнаты есть горутина, заблокированная на этом канале.
@@ -57,20 +55,24 @@ type Reactor struct {
 // из Room.haveIncomingNotification и кладёт сообщения всем пользователям
 // в User.haveIncomingNotification.
 func (r *Room) RoomManager() {
-	// TODO: тут должна быть логика удаления комнаты.
-	for {
-		<-r.haveIncomingNotification
+	for range r.haveIncomingNotification {
 		r.Users.Mutex.Lock() // что бы не могли изменить список пользователей, пока мы рассылаем уведомления.
-		for _, user := range r.Users.List {
-			user.haveIncomingNotification <- struct{}{}
+		for user := range r.Users.Set {
+			func() { // запись в зактытый канал означает, что горутина скоро будет удалена, не ошибка логики.
+				defer func() { recover() }()
+				user.haveIncomingNotification <- struct{}{}
+			}()
 		}
 		r.Users.Mutex.Unlock()
 	}
 }
 
-func (r *Reactor) createOrReplaceRoom(roomName string) {
+func (r *Reactor) createRoom(roomName string) {
 	// мьютех уже захвачен Register
 	newRoom := &Room{
+		Users: Users{
+			Set: make(map[*User]bool),
+		},
 		haveIncomingNotification: make(chan struct{}, 20),
 	}
 	r.rooms[roomName] = newRoom
@@ -84,16 +86,34 @@ func (r *Reactor) Register(user *User) (error) {
 	r.mutex.Lock()
 	room, ok := r.rooms[user.roomName]
 	if !ok {
-		r.createOrReplaceRoom(user.roomName)
+		r.createRoom(user.roomName)
 		room = r.rooms[user.roomName]
 	}
 	r.mutex.Unlock()
 
 	room.Users.Mutex.Lock()
-	room.Users.List = append(room.Users.List, user)
+	room.Users.Set[user] = true
 	room.Users.Mutex.Unlock()
 
 	user.haveIncomingNotification <- struct{}{} // тут, когда всё создано, пользователь получит все старые сообщения.
+	return nil
+}
+
+// удаляет пользователя, если он последний в комнате - удаляет её.
+func (r *Reactor) UnRegister(user *User) (error) {
+	r.mutex.RLock()
+	room := r.rooms[user.roomName]
+	r.mutex.RUnlock()
+
+	room.Users.Mutex.Lock()
+	delete(room.Users.Set, user)
+	if len(room.Users.Set) == 0 {
+		r.mutex.Lock()
+		delete(r.rooms, user.roomName)
+		r.mutex.Unlock()
+		log.Print("Комната ", user.roomName, " удалена.\n")
+	}
+	room.Users.Mutex.Unlock()
 	return nil
 }
 
@@ -105,9 +125,6 @@ func (r *Reactor) Send(roomName string, message Message) {
 	defer room.Messages.Mutex.Unlock()
 	message.Id = len(room.Messages.List)
 	room.Messages.List = append(room.Messages.List, &message)
-	//for _, value:= range room.Messages.List{
-	//	fmt.Printf("%+v ", *value)
-	//}
 	room.haveIncomingNotification <- struct{}{}
 	return
 }
@@ -120,10 +137,12 @@ func (u *User) SocketReadHandler() {
 			log.Println("Пришёл не правильный json: ", err)
 			break
 		}
-		fmt.Printf("От пользователя в комнате %s пришло сообщение: %+v.\n", u.roomName, message)
+		log.Printf("От пользователя в комнате %s пришло сообщение: %+v.\n", u.roomName, message)
 		reactor.Send(u.roomName, message)
 	}
+	close(u.haveIncomingNotification)
 	u.connection.Close()
+	log.Print("Пользователь больше не читает из \"", u.roomName, "\".\n")
 	return
 }
 
@@ -131,31 +150,32 @@ func (u *User) SocketWriteHandler() {
 	// сразу блокируемся на канале с новыми сообщениями.
 	// когда комната будет полностью создана в Reactor.Register, тут появится новое уведомление
 	// как приходят, лезем в массив сообщений комнаты, отсылаем всё, что строго больше u.lastReadId
-	<-u.haveIncomingNotification
-	reactor.mutex.RLock()
-	room := reactor.rooms[u.roomName]
-	reactor.mutex.RUnlock()
-UpdateDistributionCycle:
-	for {
+	var room *Room
+	for range u.haveIncomingNotification {
+		if room == nil { // только для первого раза, находим комнату.
+			reactor.mutex.RLock()
+			room = reactor.rooms[u.roomName]
+			reactor.mutex.RUnlock()
+		}
 		var messagesSnapshot []*Message
 		room.Messages.Mutex.RLock()
 		lastAvailableId := len(room.Messages.List) - 1
 		if lastAvailableId > u.lastReadId {
+			// как можно меньше времени блокируем общий ресурс, для этого делаем новый slice.
 			messagesSnapshot = room.Messages.List[u.lastReadId+1:]
-		} // как можно меньше времени блокируем общий ресурс, для этого делаем новый slice.
+		}
 		room.Messages.Mutex.RUnlock()
 		u.lastReadId = lastAvailableId
 		if len(messagesSnapshot) != 0 {
 			for _, message := range messagesSnapshot {
 				err := u.connection.WriteJSON(*message)
 				if err != nil {
-					log.Println("Unable to write:", err)
-					break UpdateDistributionCycle
+					log.Println("Невозможно записать: ", err)
+					break
 				}
 			}
 		}
-		<-u.haveIncomingNotification
 	}
-	u.connection.Close()
-	// TODO: продумать удаление пользователя.
+	log.Print("Пользователь больше не пишет в \"", u.roomName, "\".\n")
+	return
 }

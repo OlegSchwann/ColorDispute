@@ -62,25 +62,19 @@ func userCreator(w http.ResponseWriter, r *http.Request) {
 		log.Println("Unable to upgrade: ", err)
 		return
 	}
-	// создаём пользовалеля вокруг соединения.
 	user := User{
 		roomName:                 r.URL.Path[1:], // Так как путь всегда начинается со '/'
 		lastReadId:               -1,             // что бы пользователь получил всю историю, от начала диалога.
 		connection:               conn,
-		haveIncomingNotification: make(chan struct{}, 10),
+		haveIncomingNotification: make(chan struct{}, 50),
 	}
-	// регистрируем пользователя в реакторе(там же создаём ему комнату, если пользователь первый) -
-	// теперь другие горутины будут знать, кому отправлять сообщения.
-	err = reactor.Register(&user)
-
-	if err != nil {
-		log.Println("Unable to add user: ", err)
-		conn.Close()
-		return
-	} else {
-		log.Println("Add user to room: ", r.URL.Path)
-	}
+	reactor.Register(&user)
+	log.Println("Пользователь добавлен в комнату: ", user.roomName)
+	//---выполняются-всё-время-жизни-соединения---
 	go user.SocketReadHandler()
-	go user.SocketWriteHandler()
+	user.SocketWriteHandler()
+	//--------------------------------------------
+	reactor.UnRegister(&user)
+	log.Println("Пользователь удалён из комнаты: ", user.roomName)
 	return
 }
