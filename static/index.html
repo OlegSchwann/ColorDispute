@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>ColorDispute</title>
-    <style>
+    <style type="text/css">
         ::before, *, ::after {
             box-sizing: border-box;
         }
@@ -112,6 +112,7 @@
                 "use strict";
                 document.getElementById("room-input-address").onchange = (event)=>{
                     document.getElementById("room-link").setAttribute("href", "/" + event.currentTarget.value);
+                    return false;
                 }
             </script>
         </section>

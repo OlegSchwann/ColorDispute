@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>ColorDispute</title>
-    <style>
+    <style type="text/css">
         ::before, *, ::after {
             box-sizing: border-box;
         }
@@ -35,7 +35,7 @@
             flex-direction: column;
         }
 
-        .chat-list {
+        .chat-border {
             display: flex;
             flex-grow: 1;
             flex-direction: column;
@@ -45,7 +45,7 @@
             border-radius: 3px;
         }
 
-        .chat-list section {
+        .chat-border section {
             margin: 0.3rem;
             padding: 0 1rem;
             border-radius: 3px;
@@ -107,13 +107,9 @@
 </head>
 <body>
 <noscript>Увы и ах, в современном web мало что будет работать без Javascript. Придётся включить.</noscript>
-<!--внешний вид:
-лента в середине экрана.
-Окошко для ввода текста.
-Метка с выбором цвета, кнопка отправить.-->
 <main>
-    <article class="chat-list">
-        <div>
+    <article class="chat-border">
+        <div id="chat-container">
             <section style="background: cornsilk; color: darkolivegreen">
                 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin sodales arcu ac magna elementum, et
                 finibus mauris posuere. Suspendisse vel mollis dolor. Suspendisse consequat velit faucibus scelerisque
@@ -165,19 +161,17 @@
         </div>
     </article>
     <aside class="add-message-form">
-        <form>
-            <textarea id="message-text" placeholder="Что думаете?"></textarea>
-            <div class="controls">
-                <div class="controls-color-pickers">
-                    <div>Цвет <label for="background-color">фона</label>&nbsp;</div>
-                    <input id="background-color" type="color" value="#ffffff">
-                    <div>, <label for="text-color">текста</label>&nbsp;</div>
-                    <input id="text-color" type="color" value="#000000">
-                    <div>.</div>
-                </div>
-                <button>Отправить.</button>
+        <textarea id="message-text" placeholder="Что думаете?"></textarea>
+        <div class="controls">
+            <div class="controls-color-pickers">
+                <div>Цвет <label for="background-color">фона</label>&nbsp;</div>
+                <input id="background-color" type="color" value="#ffffff">
+                <div>, <label for="text-color">текста</label>&nbsp;</div>
+                <input id="text-color" type="color" value="#000000">
+                <div>.</div>
             </div>
-        </form>
+            <button id="message-send">Отправить.</button>
+        </div>
     </aside>
 </main>
 <a class="github-link" href="#"> <!--Октокот-->
@@ -186,14 +180,66 @@
               d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path>
     </svg>
 </a>
-<!--Шаблон нового сообщения.-->
-<template>
-    <section>
-
-    </section>
-</template>
 <script>
+    "use strict";
+    // работа с приёмом сообщения.
+    // TODO: Отдавать файл nginx'ом по любому url, кроме корневого.
+    let socket = new WebSocket("ws://localhost:8000/" + /*window.location.pathname*/ "debug");
 
+    socket.onopen = () => {
+        let message = document.createElement("section");
+        message.innerText = "Соединение установлено.";
+        message.style.backgroundColor = "#d4edda";
+        message.style.color = "#155724";
+        document.getElementById("chat-container").appendChild(message);
+    };
+
+    socket.onclose = (event) => {
+        let message = document.createElement("section");
+        message.innerText = "Соединение разорвано. ";
+        let button = document.createElement("button");
+        button.innerText = "Попробовать снова.";
+        button.onclick = () => {
+            if (socket.readyState === socket.CLOSED) {
+                let new_socket = new WebSocket("ws://localhost:8000/" + /*window.location.pathname*/ "debug"); // TODO:
+                new_socket.onopen = socket.onopen;
+                new_socket.onclose = socket.onclose;
+                new_socket.onmessage = socket.onmessage;
+                new_socket.onerror = socket.onerror;
+                socket = new_socket;
+            }
+        };
+        message.appendChild(button);
+        document.getElementById("chat-container").appendChild(message);
+        console.log("wasClean:", event.wasClean, ", reason:", event.reason);
+    };
+
+    socket.onmessage = (event) => {
+        let response = JSON.parse(event.data);
+        let message = document.createElement("section");
+        message.id = "id" + response["id"];
+        message.innerText = response["message_text"];
+        message.style.backgroundColor = response["background_color"];
+        message.style.color = response["text_color"];
+        document.getElementById("chat-container").appendChild(message);
+    };
+
+    socket.onerror = (event) => {
+        console.log("Ошибка соединения:", event.message);
+    };
+
+    // работа с отсылкой сообщения.
+    document.getElementById("message-send").onclick = () => {
+        let message = {
+            "message_text": document.getElementById("message-text").value,
+            "background_color": document.getElementById("background-color").value,
+            "text_color": document.getElementById("text-color").value
+        };
+        if (!(message.message_text && message.background_color && message.text_color)) {
+            console.log("Попытка отправить пустые данные: ", message)
+        }
+        socket.send(JSON.stringify(message))
+    }
 </script>
 </body>
 </html>
