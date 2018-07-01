@@ -71,10 +71,14 @@
             font-size: 1rem;
         }
 
+        /* Убрать кнопку отпраки, если нет текста в поле.*/
+        textarea:invalid ~ .controls button{
+            display: none;
+        }
+
         .controls {
             display: flex;
             justify-content: space-between;
-            align-items: baseline;
             margin: 0.3rem 0 0 0;
         }
 
@@ -82,11 +86,16 @@
             display: flex;
             flex-direction: row;
             align-items: center;
+            height: 2rem;
         }
 
         button, input {
             border: 1px solid gainsboro;
             border-radius: 3px;
+        }
+
+        .controls-button{
+            height: 2rem;
         }
 
         /*Убрать октокота, если не помещается на экране.*/
@@ -161,7 +170,7 @@
         </div>
     </article>
     <aside class="add-message-form">
-        <textarea id="message-text" placeholder="Что думаете?"></textarea>
+        <textarea id="message-text" placeholder="Что думаете?" required></textarea>
         <div class="controls">
             <div class="controls-color-pickers">
                 <div>Цвет <label for="background-color">фона</label>&nbsp;</div>
@@ -170,7 +179,7 @@
                 <input id="text-color" type="color" value="#000000">
                 <div>.</div>
             </div>
-            <button id="message-send">Отправить.</button>
+            <button class="controls-button" id="message-send">Отправить.</button>
         </div>
     </aside>
 </main>
@@ -200,7 +209,7 @@
         let button = document.createElement("button");
         button.innerText = "Попробовать снова.";
         button.onclick = () => {
-            if (socket.readyState === socket.CLOSED) {
+            if (socket.readyState === socket.CLOSED) { // предотвращение установления 2-х соединений одновременно.
                 let new_socket = new WebSocket("ws://localhost:8000/" + /*window.location.pathname*/ "debug"); // TODO:
                 new_socket.onopen = socket.onopen;
                 new_socket.onclose = socket.onclose;
@@ -238,7 +247,8 @@
         if (!(message.message_text && message.background_color && message.text_color)) {
             console.log("Попытка отправить пустые данные: ", message)
         }
-        socket.send(JSON.stringify(message))
+        socket.send(JSON.stringify(message));
+        console.log("Отправлено: ", message);
     }
 </script>
 </body>

@@ -33,11 +33,15 @@ import (
 	"log"
 	"net/http"
 	"github.com/gorilla/websocket"
-	"fmt"
 )
 
+// единственный глобальный объект - контейнер для всех комнат.
+var reactor = Reactor{
+	rooms: make(map[string]*Room),
+}
+
 func main() {
-	http.HandleFunc("/", socketCreator)
+	http.HandleFunc("/", userCreator)
 	log.Println("Listening on :8000")
 	err := http.ListenAndServe(":8000", nil)
 	if err != nil {
@@ -45,52 +49,38 @@ func main() {
 	}
 }
 
-// Настройки буферов WebSocket.
+// Настройки WebSocket, по умолчанию, токен не проверяем.
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		return true
 	},
 }
 
-func socketCreator(w http.ResponseWriter, r *http.Request) {
-	roomName := r.URL.Path
-	println(roomName)
-
+func userCreator(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("Unable to upgrade: ", err)
 		return
 	}
-	// TODO: регистрация в реакторе по roomName
-	go socketReadHandler(conn)
-	go socketWriteHandler(conn)
-	return
-}
-
-func socketReadHandler(conn *websocket.Conn)  {
-	for {
-		message := Message{}
-		err := conn.ReadJSON(&message)
-		if err != nil {
-			log.Println("Пришёл не правильный json: ", err)
-			break
-		}
-		fmt.Printf("%v", message)
+	// создаём пользовалеля вокруг соединения.
+	user := User{
+		roomName:                 r.URL.Path[1:], // Так как путь всегда начинается со '/'
+		lastReadId:               -1,             // что бы пользователь получил всю историю, от начала диалога.
+		connection:               conn,
+		haveIncomingNotification: make(chan struct{}, 10),
 	}
-	conn.Close()
-	return
-}
+	// регистрируем пользователя в реакторе(там же создаём ему комнату, если пользователь первый) -
+	// теперь другие горутины будут знать, кому отправлять сообщения.
+	err = reactor.Register(&user)
 
-func socketWriteHandler(conn *websocket.Conn)  {
-	err := conn.WriteJSON(Message{
-		Id:              1,
-		MessageText:     "I just came to say hello!",
-		BackgroundColor: "#ddfeff",
-		TextColor:       "#14243d",
-	})
 	if err != nil {
-		log.Println("Unable to write:", err)
+		log.Println("Unable to add user: ", err)
+		conn.Close()
+		return
+	} else {
+		log.Println("Add user to room: ", r.URL.Path)
 	}
-	//conn.Close()
+	go user.SocketReadHandler()
+	go user.SocketWriteHandler()
 	return
 }
