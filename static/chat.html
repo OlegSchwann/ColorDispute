@@ -50,6 +50,7 @@
             padding: 0 1rem;
             border-radius: 3px;
             text-align: justify;
+            word-break: break-all;
         }
 
         .add-message-form {
@@ -154,7 +155,7 @@
         </div>
     </aside>
 </main>
-<a class="github-link" href="https://github.com/OlegSchwann/ColorDispute">
+<a class="github-link" href="https://github.com/OlegSchwann/ColorDispute" target="_blank">
     <svg class="github-icon" viewBox="0 0 16 16" version="1.1" aria-hidden="true">
         <!--Октокот-->
         <path fill-rule="evenodd"
@@ -164,8 +165,8 @@
 <script>
     "use strict";
     // работа с приёмом сообщения.
-    // TODO: Отдавать файл nginx'ом по любому url, кроме корневого.
-    let socket = new WebSocket("ws://localhost:8000" + window.location.pathname);
+
+    let socket = new WebSocket("ws://" + window.location.host + ":8000" + window.location.pathname);
 
     socket.onopen = () => {
         let message = document.createElement("section");
@@ -182,7 +183,7 @@
         button.innerText = "Попробовать снова.";
         button.onclick = () => {
             if (socket.readyState === socket.CLOSED) { // предотвращение установления 2-х соединений одновременно.
-                let new_socket = new WebSocket("ws://localhost:8000" + window.location.pathname);
+                let new_socket = new WebSocket("ws://" + window.location.host + ":8000" + window.location.pathname);
                 new_socket.onopen = socket.onopen;
                 new_socket.onclose = socket.onclose;
                 new_socket.onmessage = socket.onmessage;
