@@ -65,6 +65,7 @@ func (r *Room) RoomManager() {
 		}
 		r.Users.Mutex.Unlock()
 	}
+	log.Printf("RoomManager завершился.")
 }
 
 func (r *Reactor) createRoom(roomName string) {
@@ -109,6 +110,7 @@ func (r *Reactor) UnRegister(user *User) (error) {
 	delete(room.Users.Set, user)
 	if len(room.Users.Set) == 0 {
 		r.mutex.Lock()
+		close(room.haveIncomingNotification) // что бы завершить горутину Room.RoomManager
 		delete(r.rooms, user.roomName)
 		r.mutex.Unlock()
 		log.Print("Комната ", user.roomName, " удалена.\n")
