@@ -166,7 +166,7 @@
     "use strict";
     // работа с приёмом сообщения.
 
-    let socket = new WebSocket("ws://" + window.location.host + ":8000" + window.location.pathname);
+    let socket = new WebSocket("ws://" + window.location.hostname + ":8000" + window.location.pathname);
 
     socket.onopen = () => {
         let message = document.createElement("section");
@@ -183,7 +183,7 @@
         button.innerText = "Попробовать снова.";
         button.onclick = () => {
             if (socket.readyState === socket.CLOSED) { // предотвращение установления 2-х соединений одновременно.
-                let new_socket = new WebSocket("ws://" + window.location.host + ":8000" + window.location.pathname);
+                let new_socket = new WebSocket("ws://" + window.location.hostname + ":8000" + window.location.pathname);
                 new_socket.onopen = socket.onopen;
                 new_socket.onclose = socket.onclose;
                 new_socket.onmessage = socket.onmessage;
