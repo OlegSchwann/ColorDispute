@@ -25,5 +25,13 @@
     Клиент свёрстан на html. Использовалось чистое <a href="https://learn.javascript.ru/websockets">api websocket'ов</a>.
 
 <h3>Запуск</h3>
-    Nginx должен отдавать 2 страницы, и сервер должен быть запущен.
-    <a href="https://github.com/OlegSchwann/ColorDispute/blob/master/run.sh">run.sh</a> запускает у меня на ноутбуке.
+    Nginx должен отдавать 2 страницы, и сервер должен быть запущен. Я полностью переделал на Docker.
+
+    cd staticserver/
+    sudo docker build . -t staticserver
+    sudo docker run -d -p 8080:80 staticserver
+    
+    cd websocketserver/
+    sudo docker build . -t websocketserver
+    sudo docker run -d -p 8000:8000 websocketserver
+    
