@@ -58,10 +58,10 @@ func (r *Room) RoomManager() {
 	for range r.haveIncomingNotification {
 		r.Users.Mutex.Lock() // что бы не могли изменить список пользователей, пока мы рассылаем уведомления.
 		for user := range r.Users.Set {
-			func() { // запись в зактытый канал означает, что горутина скоро будет удалена, не ошибка логики.
+			func(user *User) { // запись в зактытый канал означает, что горутина скоро будет удалена, не ошибка логики.
 				defer func() { recover() }()
 				user.haveIncomingNotification <- struct{}{}
-			}()
+			}(&user)
 		}
 		r.Users.Mutex.Unlock()
 	}
